@@ -28,12 +28,30 @@ async function run() {
 
     const database = client.db("BrandShopDB");
     const TrendingProducts = database.collection("TrendingProducts");
+    const productsCollection = database.collection("productsCollection");
+
 
     app.get('/TrendingProducts', async  (req, res) => {
         const corsue = TrendingProducts.find();
         const result = await corsue.toArray()
         res.send(result)
     })
+	
+	app.post("/products", async (req, res) => {
+		const product = req.body;
+		const result = await productsCollection.insertOne(product);
+		res.send(result)
+		console.log(product)
+	})
+
+	app.get("/products/:name", (req, res) => {
+		const {name} = req.params
+		console.log(name)
+		 const query = { BrandName: name };
+		const result = productsCollection.find(query);
+		res.send(result)
+	})
+
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
