@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -29,7 +29,7 @@ async function run() {
     const database = client.db("BrandShopDB");
     const TrendingProducts = database.collection("TrendingProducts");
     const productsCollection = database.collection("productsCollection");
-
+    const myCard = database.collection("myCard")
 
     app.get('/TrendingProducts', async  (req, res) => {
         const corsue = TrendingProducts.find();
@@ -44,13 +44,61 @@ async function run() {
 		console.log(product)
 	})
 
-	app.get("/products/:name", (req, res) => {
+	app.get("/products/:name", async (req, res) => {
 		const {name} = req.params
-		 const query = { BrandName: name };
-		const result = productsCollection.find(query);
+		const result = await productsCollection.find({BrandName: name}).toArray();
 		res.send(result)
 	})
 
+	app.get("/product/:id", async(req, res) => {
+		 const id = req.params.id
+        const query = { _id: new ObjectId(id) };
+        const result = await productsCollection.findOne(query);
+        res.send(result)
+
+	})
+
+  app.post("/myProducts", async(req, res) => {
+		const product = req.body;
+		const result = await myCard.insertOne(product);
+		res.send(result)
+	})
+
+  app.get('/myProducts', async(req, res) => {
+    const corsue = myCard.find();
+    const result = await corsue.toArray()
+    res.send(result)
+ })
+
+
+ app.delete("/myProducts/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id : id};
+  const result = await myCard.deleteOne(query);
+  res.send(result)
+ }) 
+
+
+  app.put("/products/:id", async(req, res) => {
+    const id = req.params.id
+    const product = req.body
+    const filter = { _id: new ObjectId(id) };
+    const options = { upsert: true };
+
+    const newProduct = {
+      $set: {
+        name: product.Name,
+        BrandName: product.BrandName,
+        Category: product.Category,
+        Price: product.Price,
+        Rating: product.Rating,
+        ShortDescription: product.ShortDescription,
+        image: product.image,
+      },
+    };
+    const result = await productsCollection.updateOne(filter, newProduct, options);
+    res.send(result)
+  })
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
