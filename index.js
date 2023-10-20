@@ -87,7 +87,7 @@ async function run() {
 
     const newProduct = {
       $set: {
-        name: product.Name,
+        name: product.name,
         BrandName: product.BrandName,
         Category: product.Category,
         Price: product.Price,
